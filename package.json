@@ -1,0 +1,68 @@
+{
+  "name": "@codinfy/mcp",
+  "version": "0.1.0",
+  "description": "Official Codinfy public MCP server - validate licenses, create checkouts, list products, fetch brand tokens, manage Login with Codinfy OAuth, and configure Codinfy Ads from any MCP-capable AI agent.",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "codinfy",
+    "licenses",
+    "payments",
+    "geniuspay",
+    "marketplace",
+    "saas",
+    "ai-agents",
+    "claude",
+    "codex",
+    "cursor"
+  ],
+  "license": "MIT",
+  "author": "RAFLOX SAS <contact@codinfy.com> (https://codinfy.com)",
+  "homepage": "https://docs.codinfy.com/mcp",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bakalagoin/codinfy-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/bakalagoin/codinfy-mcp/issues"
+  },
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "codinfy-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "SECURITY.md"
+  ],
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "lint": "eslint \"src/**/*.ts\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "eslint": "^9.0.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
