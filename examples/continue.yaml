@@ -1,0 +1,7 @@
+# .continue/config.yaml (extrait)
+mcpServers:
+  - name: codinfy
+    command: npx
+    args: ["-y", "@codinfy/mcp"]
+    env:
+      CODINFY_LICENSE_SECRET: "VOTRE_SECRET_LICENCE_ICI"

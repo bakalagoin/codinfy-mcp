@@ -1,174 +1,69 @@
 # `@codinfy/mcp` — Codinfy Public MCP Server
 
-> Official **Model Context Protocol** server for Codinfy.
-> Connect your AI agent (Claude Code, Codex, Cursor, Continue, Cline, Windsurf) to the Codinfy platform to validate licenses, create checkouts, list products, track events, fetch brand tokens, manage OAuth metadata, configure ads, and more.
+> Official **Model Context Protocol** server for Codinfy. Connect your AI
+> agent (Claude Code/Desktop, Cursor, Codex, Continue, Cline, Windsurf) to
+> the Codinfy platform: validate licenses, check updates, browse the
+> marketplace catalog and fetch the official design tokens.
 
 [![npm version](https://img.shields.io/npm/v/@codinfy/mcp.svg)](https://www.npmjs.com/package/@codinfy/mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
----
-
 ## Status
 
-> 🚧 **v0.1.0 — scaffold.** Tool implementations land in AGENT-44.
-> Track progress at [`docs.codinfy.com/mcp`](https://docs.codinfy.com/mcp).
+**v0.2.0** — 10 tools live, every one backed by a real shipped Codinfy API
+(no stubs, ever). Payments, OAuth (Login with Codinfy) and Ads tools ship
+together with their platform APIs.
 
----
-
-## What is this?
-
-The Model Context Protocol ([MCP](https://modelcontextprotocol.io)) is an open standard that lets AI agents call external tools through a well-defined transport. This package implements **the public Codinfy MCP server**: a thin TypeScript layer that exposes Codinfy's public APIs as MCP tools.
-
-It is the tool any third-party developer, vendor, or agency uses when they want their agent to talk to Codinfy.
-
-## Companion projects
-
-| Repo | Purpose | License |
-|---|---|---|
-| [`codinfy-mcp`](https://github.com/bakalagoin/codinfy-mcp) (this) | Public MCP for Codinfy API consumers | MIT |
-| [`codix-build-mcp`](https://github.com/bakalagoin/codix-build-mcp) | Codix Build MCP — scaffold projects with AI agents using Smart Context Mode | MIT |
-| `codinfy-mcp-internal` | Private MCP for Codinfy team agents only | proprietary |
-
----
-
-## Install
+## Quick start
 
 ```bash
-npm install -g @codinfy/mcp
-# or
-npx -y @codinfy/mcp
+# Claude Code
+claude mcp add codinfy -e CODINFY_LICENSE_SECRET=xxx -- npx -y @codinfy/mcp
 ```
 
-## Configure your agent
+Configs for Claude Desktop, Cursor, Codex, Continue and Cline:
+[`examples/`](examples/). Full guide: [`docs/getting-started.md`](docs/getting-started.md).
 
-### Claude Code / Claude Desktop
+## Tools
 
-`~/.claude/mcp.json` (or `claude_desktop_config.json`):
+| Category | Tools |
+|---|---|
+| **Licenses** (HMAC-signed) | `codinfy_validate_license` · `codinfy_check_license_status` · `codinfy_get_grace_period` · `codinfy_check_license_update` |
+| **Catalog** | `codinfy_list_products` · `codinfy_get_product` · `codinfy_search_products` |
+| **Platform** | `codinfy_get_design_tokens` · `codinfy_health` · `codinfy_get_integration_links` |
 
-```json
-{
-  "mcpServers": {
-    "codinfy": {
-      "command": "npx",
-      "args": ["-y", "@codinfy/mcp"],
-      "env": {
-        "CODINFY_API_KEY": "pk_live_xxxxxxxxxxxxxxxxx"
-      }
-    }
-  }
-}
-```
+Details: [`docs/api-reference.md`](docs/api-reference.md) ·
+problems: [`docs/troubleshooting.md`](docs/troubleshooting.md).
 
-### Cursor
+## Environment
 
-`Settings → Cursor → MCP → New Server`:
+| Variable | Required | Purpose |
+|---|---|---|
+| `CODINFY_LICENSE_SECRET` | license tools only | HMAC secret delivered with your license — **never commit it** |
+| `CODINFY_API_BASE` | no | default `https://api.codinfy.com/api` |
+| `CODINFY_SITE_BASE` | no | default `https://codinfy.com` |
+| `CODINFY_API_KEY` | no | `pk_live_…` forwarded as `X-Codinfy-Api-Key`; key issuance arrives with the developer portal |
 
-```json
-{
-  "name": "codinfy",
-  "command": "npx",
-  "args": ["-y", "@codinfy/mcp"],
-  "env": { "CODINFY_API_KEY": "pk_live_xxxxxxxxxxxxxxxxx" }
-}
-```
+## Security model
 
-### Codex / Continue / Cline / Windsurf
-
-See [`docs.codinfy.com/mcp/clients`](https://docs.codinfy.com/mcp).
-
----
-
-## Get an API key
-
-Log in at [`codinfy.com/admin/parametres/api-s`](https://codinfy.com) and create a key:
-
-- `pk_live_…` — production
-- `pk_sandbox_…` — sandbox (free tier, rate-limited)
-
-Keys are scoped (`licenses:read`, `payments:write`, `brand:read`, …) and rotateable from the same UI.
-
----
-
-## Tools (16 — to be implemented in AGENT-44)
-
-### Licenses
-- `codinfy_license_validate` — validate a purchase code and domain
-- `codinfy_license_list` — list licenses for a customer
-
-### Products & checkout
-- `codinfy_products_list`
-- `codinfy_checkout_create`
-- `codinfy_checkout_status`
-
-### Brand & design
-- `codinfy_brand_get` — current site name, colors, logos, social
-- `codinfy_brand_tokens_get` — Tailwind CSS 4 tokens
-
-### Identity (Login with Codinfy — OAuth 2.0 / OIDC)
-- `codinfy_oauth_metadata` — `.well-known/openid-configuration`
-- `codinfy_oauth_jwks` — public JWKS
-- `codinfy_oauth_apps_list` — list connected applications
-
-### Ads
-- `codinfy_ads_config_get`
-- `codinfy_ads_placement_create`
-- `codinfy_ads_stats_get`
-
-### Analytics & misc
-- `codinfy_event_track` — track a custom event
-- `codinfy_webhook_test`
-- `codinfy_health`
-
-> Detailed schemas, parameters, examples and changelogs live in [`docs.codinfy.com/mcp`](https://docs.codinfy.com/mcp).
-
----
+- Requests to the License API are signed **HMAC-SHA256 over the raw body**
+  with an anti-replay timestamp (±300 s) — the same wire contract as the
+  official PHP and Node SDKs (cross-language test vector in `tests/`).
+- Responses carry an **RS256 JWT**: verify it locally in your script (see
+  the [anti-tampering guide](https://github.com/bakalagoin/codinfy/blob/main/docs/sdk/INTEGRATION_GUIDE.md)).
+- `X-RateLimit-*` headers are relayed in every tool result so agents can
+  self-throttle (60 req/min/IP).
+- This public server never exposes internal Codinfy tooling (rule R15).
 
 ## Development
 
 ```bash
-git clone https://github.com/bakalagoin/codinfy-mcp.git
-cd codinfy-mcp
 npm install
-npm run build
-npm test
+npm test          # vitest — includes the PHP cross-language HMAC vector
+npm run build     # tsc → dist/
+node dist/index.js  # stdio server, "ready on stdio (10 tools)"
 ```
-
-### Project layout
-
-```
-codinfy-mcp/
-├── src/
-│   ├── index.ts              # MCP server bootstrap (stdio transport)
-│   ├── tools/                # one file per tool, all re-exported from index
-│   ├── client/               # thin HTTP client for api.codinfy.com
-│   └── types/                # shared schemas (Zod)
-├── tests/
-├── package.json
-├── tsconfig.json
-└── .github/workflows/        # ci.yml + publish-npm.yml
-```
-
----
-
-## Releases
-
-Pushing a tag `v*` to `main` publishes to npm automatically (see [`publish-npm.yml`](.github/workflows/publish-npm.yml)).
-
-```bash
-npm version patch        # 0.1.0 → 0.1.1
-git push --follow-tags
-```
-
----
-
-## Security
-
-Report vulnerabilities privately to **security@codinfy.com**. See [`SECURITY.md`](SECURITY.md).
-
-## Contributing
-
-Issues and PRs welcome. See [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ## License
 
-[MIT](LICENSE) © 2026 RAFLOX SAS — Abidjan, Côte d'Ivoire.
+MIT © [RAFLOX SAS](https://codinfy.com) — Codinfy, Abidjan.

@@ -1,7 +1,7 @@
 {
   "name": "@codinfy/mcp",
-  "version": "0.1.0",
-  "description": "Official Codinfy public MCP server - validate licenses, create checkouts, list products, fetch brand tokens, manage Login with Codinfy OAuth, and configure Codinfy Ads from any MCP-capable AI agent.",
+  "version": "0.2.0",
+  "description": "Official Codinfy public MCP server - validate licenses (HMAC + RS256 JWT), check script updates, browse the marketplace catalog and fetch the official design tokens from any MCP-capable AI agent.",
   "keywords": [
     "mcp",
     "model-context-protocol",

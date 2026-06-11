@@ -1,0 +1,5 @@
+# ~/.codex/config.toml
+[mcp_servers.codinfy]
+command = "npx"
+args = ["-y", "@codinfy/mcp"]
+env = { CODINFY_LICENSE_SECRET = "VOTRE_SECRET_LICENCE_ICI" }

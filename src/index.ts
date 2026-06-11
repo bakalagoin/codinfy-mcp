@@ -1,50 +1,52 @@
 #!/usr/bin/env node
 /**
- * @codinfy/mcp — Codinfy public MCP server (scaffold).
+ * @codinfy/mcp — official Codinfy public MCP server (AGENT-44).
  *
- * Full tool implementations land in AGENT-44 of the Codinfy build plan.
- * This entry point will register 16 tools across:
- *   - Licenses (validate, list)
- *   - Products & checkout (list, create, status)
- *   - Brand & design (get, tokens)
- *   - Identity / Login with Codinfy (OAuth metadata, JWKS, connected apps)
- *   - Codinfy Ads (config, placements, stats)
- *   - Analytics (event_track, webhook_test, health)
+ * 10 tools backed by REAL shipped Codinfy APIs (rule R11):
+ *   licenses  : validate, status, grace period, check-update (HMAC-signed)
+ *   catalog   : list / get / search published products
+ *   platform  : design tokens, health, integration links
  *
- * Auth: CODINFY_API_KEY env var (pk_live_… or pk_sandbox_…).
+ * Payments, OAuth (Login with Codinfy) and Ads tools ship together with
+ * their platform APIs (AGENT-15 / AGENT-51) — nothing here is stubbed.
+ *
+ * Env: CODINFY_API_BASE (default https://api.codinfy.com/api),
+ *      CODINFY_SITE_BASE, CODINFY_LICENSE_SECRET (license tools only),
+ *      CODINFY_API_KEY (pk_live_… — forwarded once the developer portal
+ *      issues keys; optional today). No credential is ever hardcoded (R1).
+ *
  * Spec: https://docs.codinfy.com/mcp
  */
 
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
-const PACKAGE_NAME = "@codinfy/mcp";
-const PACKAGE_VERSION = "0.1.0";
+import { CodinfyApiClient } from "./api-client.js";
+import { loadConfig, PACKAGE_NAME, PACKAGE_VERSION } from "./config.js";
+import { registerTools } from "./tools.js";
 
-async function main(): Promise<void> {
-  const apiKey = process.env.CODINFY_API_KEY;
-  if (!apiKey) {
-    console.error(
-      `[${PACKAGE_NAME}] Missing CODINFY_API_KEY. ` +
-        "Generate one at https://codinfy.com/admin/parametres/api-s and set it as an env var.",
-    );
-    process.exit(1);
-  }
+export function buildServer(env: NodeJS.ProcessEnv = process.env): McpServer {
+  const config = loadConfig(env);
+  const client = new CodinfyApiClient(config);
 
-  const server = new Server(
-    { name: PACKAGE_NAME, version: PACKAGE_VERSION },
-    { capabilities: { tools: {} } },
-  );
+  const server = new McpServer({ name: PACKAGE_NAME, version: PACKAGE_VERSION });
+  registerTools(server, client, config);
 
-  // AGENT-44: register tools here.
-  // server.setRequestHandler(...)
-
-  const transport = new StdioServerTransport();
-  await server.connect(transport);
-  console.error(`[${PACKAGE_NAME}] v${PACKAGE_VERSION} ready on stdio.`);
+  return server;
 }
 
-main().catch((error: unknown) => {
-  console.error(`[${PACKAGE_NAME}] Fatal:`, error);
-  process.exit(1);
-});
+async function main(): Promise<void> {
+  const server = buildServer();
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+  console.error(`[${PACKAGE_NAME}] v${PACKAGE_VERSION} ready on stdio (10 tools).`);
+}
+
+// Only start the stdio loop when executed directly (not when imported by tests).
+const entry = process.argv[1]?.replace(/\\/g, "/");
+if (entry && import.meta.url.endsWith(entry.split("/").pop() ?? "")) {
+  main().catch((error: unknown) => {
+    console.error(`[${PACKAGE_NAME}] Fatal:`, error);
+    process.exit(1);
+  });
+}
